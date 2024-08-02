@@ -23,6 +23,8 @@ public class WikimediaChangesProducer {
         properties.setProperty("key.serializer", StringSerializer.class.getName());
         properties.setProperty("value.serializer", StringSerializer.class.getName());
 
+        //you might need to add more properties if the kakfka version you are using is < 3.0.0
+
         //create producer
         KafkaProducer<String, String> producer = new KafkaProducer<>(properties);
 
@@ -39,7 +41,6 @@ public class WikimediaChangesProducer {
 
         //we can for 10mins and block the prog
         TimeUnit.MINUTES.sleep(1);
-
 
     }
 
