@@ -45,7 +45,7 @@ public class OpenSearchIdempotentConsumer {
         //subscribe consumer to topic
         kafkaConsumer.subscribe(Collections.singleton("wikimedia.recentchange"));
 
-        //we need to create index on OS if doesn't exist already
+        //we need to create index on OS if it doesn't exist already
         try (openSearchClient; kafkaConsumer) {
             boolean indexExists = openSearchClient.indices().exists(new GetIndexRequest("wikimedia"), RequestOptions.DEFAULT);
 
@@ -75,7 +75,6 @@ public class OpenSearchIdempotentConsumer {
 
                     //send record into OS
                     IndexRequest indexRequest = new IndexRequest("wikimedia").source(record.value(), XContentType.JSON).id(id);
-
 
                     IndexResponse indexResponse = openSearchClient.index(indexRequest, RequestOptions.DEFAULT);
 
