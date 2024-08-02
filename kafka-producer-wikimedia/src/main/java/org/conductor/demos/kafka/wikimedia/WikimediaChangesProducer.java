@@ -23,7 +23,7 @@ public class WikimediaChangesProducer {
         properties.setProperty("key.serializer", StringSerializer.class.getName());
         properties.setProperty("value.serializer", StringSerializer.class.getName());
 
-        //you might need to add more properties if the kakfka version you are using is < 3.0.0
+        //add more producer properties if the kafka version you are using is < 3.0.0
 
         //create producer
         KafkaProducer<String, String> producer = new KafkaProducer<>(properties);
