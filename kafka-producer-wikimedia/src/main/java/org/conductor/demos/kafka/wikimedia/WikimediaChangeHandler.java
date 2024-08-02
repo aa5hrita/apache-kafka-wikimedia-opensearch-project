@@ -40,13 +40,10 @@ public class WikimediaChangeHandler implements EventHandler {
     @Override
     public void onComment(String s) {
         //nothing here
-
     }
 
     @Override
     public void onError(Throwable throwable) {
-
         log.error("Error in stream reading", throwable);
-
     }
 }

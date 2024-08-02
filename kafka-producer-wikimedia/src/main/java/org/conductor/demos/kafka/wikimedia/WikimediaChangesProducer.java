@@ -25,6 +25,11 @@ public class WikimediaChangesProducer {
 
         //add more producer properties if the kafka version you are using is < 3.0.0
 
+        //set high throughput properties
+        properties.setProperty("linger.ms", "20");
+        properties.setProperty("batch.size", Integer.toString(32*1024));
+        properties.setProperty("compression.type", "snappy");
+
         //create producer
         KafkaProducer<String, String> producer = new KafkaProducer<>(properties);
 
