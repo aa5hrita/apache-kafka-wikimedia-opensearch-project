@@ -67,6 +67,7 @@ public class OpenSearchIdempotentConsumer {
                 for (ConsumerRecord<String, String> record : consumerRecords) {
 
                     //Idempotent: Strategy 1 - define ID using kafka record coordinates
+                    //generic unique id that I can use for messages I receive from a consumer t+p+o
                     // String id =record.topic() + "_" + record.partition() + "_" + record.offset();
 
                     //If your data provides an ID use that (recommended)

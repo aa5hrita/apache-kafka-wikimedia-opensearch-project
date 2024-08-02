@@ -35,7 +35,7 @@ import java.util.Properties;
 // Data retention policy - when offset reset to be done - on consumer being down for some/long time
 // demo to replay data
 // add graceful shutdown and resume again from the committed offset while shutdown
-
+//if I want to replay data for a consumer, I should reset offsets of consumer groups
 public class OSConsumerOffsetResetReplayData {
 
     public static void main(String[] args) throws IOException {
