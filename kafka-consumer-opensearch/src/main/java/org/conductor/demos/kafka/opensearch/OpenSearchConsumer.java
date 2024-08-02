@@ -6,16 +6,28 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
+import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.opensearch.action.index.IndexRequest;
+import org.opensearch.action.index.IndexResponse;
 import org.opensearch.client.RequestOptions;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.client.indices.CreateIndexRequest;
 import org.opensearch.client.indices.GetIndexRequest;
+import org.opensearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Properties;
 
 //https://mycloudnotes.atlassian.net/wiki/x/XAD-Ag - Opensearch101
 public class OpenSearchConsumer {
@@ -27,8 +39,13 @@ public class OpenSearchConsumer {
         //first create OS Client
         RestHighLevelClient openSearchClient = createOpenSearchClient();
 
+        //create kafka client
+        KafkaConsumer<String, String> kafkaConsumer = createKafkaConsumer();
+        //subscribe consumer to topic
+        kafkaConsumer.subscribe(Collections.singleton("wikimedia.recentchange"));
+
         //we need to create index on OS if doesn't exist already
-        try (openSearchClient) {
+        try (openSearchClient; kafkaConsumer) {
             boolean indexExists = openSearchClient.indices().exists(new GetIndexRequest("wikimedia"), RequestOptions.DEFAULT);
 
             if (!indexExists) {
@@ -38,11 +55,43 @@ public class OpenSearchConsumer {
             } else {
                 log.info("The wikimedia index already exists");
             }
+
+            //main code logic
+            while (true) {
+
+                ConsumerRecords<String, String> consumerRecords = kafkaConsumer.poll(Duration.ofMillis(3000)); //3ms
+                int recordCount = consumerRecords.count();
+                log.info("Received: " + recordCount + " record(s)");
+
+                for (ConsumerRecord<String, String> record : consumerRecords) {
+                    //send record into OS
+                    IndexRequest indexRequest = new IndexRequest("wikimedia").source(record.value(), XContentType.JSON);
+
+                    IndexResponse indexResponse = openSearchClient.index(indexRequest, RequestOptions.DEFAULT);
+
+                    log.info("Inserted one document into open search!" + " indexResponseID: " + indexResponse.getId());
+
+                }
+            }
+            //TWR auto-close things
         }
-        //create kafka client
-        //main code logic
-        //close things
-        openSearchClient.close();
+    }
+
+    private static KafkaConsumer<String, String> createKafkaConsumer() {
+        String groupId = "consumer-opensearch-demo";
+        String bootsrapServers = "127.0.0.1:9092";
+
+        // create consumer configs
+        Properties properties = new Properties();
+        properties.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootsrapServers);
+        properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+
+        // create consumer
+        return new KafkaConsumer<>(properties);
     }
 
     public static RestHighLevelClient createOpenSearchClient() {
