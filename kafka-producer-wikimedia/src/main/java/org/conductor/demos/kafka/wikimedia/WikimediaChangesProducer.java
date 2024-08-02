@@ -27,7 +27,7 @@ public class WikimediaChangesProducer {
 
         //set high throughput properties
         properties.setProperty("linger.ms", "20");
-        properties.setProperty("batch.size", Integer.toString(32*1024));
+        properties.setProperty("batch.size", Integer.toString(32 * 1024));
         properties.setProperty("compression.type", "snappy");
 
         //create producer
@@ -46,7 +46,5 @@ public class WikimediaChangesProducer {
 
         //we can for 10mins and block the prog
         TimeUnit.MINUTES.sleep(1);
-
     }
-
 }
